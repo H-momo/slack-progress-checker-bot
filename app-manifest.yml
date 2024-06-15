@@ -8,28 +8,39 @@ display_information:
 
     \r
 
-    *2024/6/15 現在の機能*\r
+    *2024/6/16 現在の機能*\r
 
     \r
 
-    * Bot がメンションされたメッセージを, 指定したチャンネルにリンクを送信する形で転送します."
+    \ * Bot がメンションされたメッセージを, #00_progress-report にリンクを送信する形で転送します.\r
+
+    \ * *(new)* /post コマンドでメッセージのリンクを送ると, #00_progress-report にメッセージをリンクを送信する形で転送します.\r
+
+    \ * *(new)* 転送時に, 元のメッセージに対して :tada: と :otsukaresama: のリアクションをつけます."
 features:
   bot_user:
-    display_name: 進捗
+    display_name: 進捗_progress
     always_online: true
+  slash_commands:
+    - command: /post
+      description: Send given message to the channel
+      usage_hint: "[link of msg]"
+      should_escape: true
 oauth_config:
   scopes:
     user:
       - channels:history
     bot:
       - app_mentions:read
+      - channels:history
       - channels:join
       - channels:read
       - chat:write
       - chat:write.customize
-      - users:read
-      - channels:history
+      - commands
       - files:write
+      - users:read
+      - reactions:write
 settings:
   event_subscriptions:
     user_events:

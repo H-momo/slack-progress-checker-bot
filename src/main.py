@@ -2,6 +2,9 @@ import os
 from dotenv import load_dotenv
 from slack_bolt import App
 from slack_bolt.adapter.socket_mode import SocketModeHandler
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+import re
 import requests
 
 POST_URL = 'https://slack.com/api/chat.postMessage'
@@ -12,33 +15,37 @@ SLACK_APP_TOCKEN = os.environ['SLACK_APP_TOKEN']
 POST_CHANNEL_ID = os.environ['POST_CHANNEL_ID']
 
 app = App(token=SLACK_BOT_TOKEN)
+client = WebClient(token=SLACK_BOT_TOKEN)
 
 CHANNEL_DATA = dict()
 USER_DATA = dict()
 
-# if mention
-@app.event("app_mention")
-def handle_app_mention_events(body, say):
-    event = body.get("event", {})
-    if (event == {} or event.get("edited") != None):
-        return
+# Reactions to add when posting a message
+reactions = ["tada"]
 
-    # get posted user name and icon
-    if (USER_DATA.get(event.get("user")) == None):
+
+def post_message(say, channel_id, user_id, ts, team_id):
+    # add reactions
+    try:
+        # Add 🎉 reaction to the message
+        for reaction in reactions:
+            app.client.reactions_add(channel=channel_id, timestamp=ts, name=reaction)
+    except SlackApiError as e:
+        print(f"Error adding reactions: {e.response['error']}")
+
+    # get posted user name and icon# get posted user name and icon
+    if (USER_DATA.get(user_id) == None):
         init()
-    user_id = event.get("user")
     user_name = USER_DATA.get(user_id).get("name", "unkown user")
-    user_icon = USER_DATA.get(event.get("user")).get("img")
+    user_icon = USER_DATA.get(user_id).get("img")
 
     # get posted channel name
-    channel_id = event.get("channel")
     if (CHANNEL_DATA.get(channel_id) == None):
         init()
     channel_name = CHANNEL_DATA.get(channel_id, "unkown channel")
 
     # get message url
-    team_id = body.get("team_id")
-    timestamp = event.get("ts").replace('.', '')
+    timestamp = ts.replace('.', '')
     message_url = f"https://{team_id}.slack.com/archives/{channel_id}/p{timestamp}"
 
     # post message
@@ -57,6 +64,41 @@ def handle_app_mention_events(body, say):
         )
 
     print(f"Posted: {message_url}")
+
+
+# if /post
+@app.command("/post")
+def handle_command(ack, respond, command, say, client):
+    ack()
+    link = command['text']
+
+    # Extract team_id, channel_id, and timestamp from the link
+    match = re.search(r'https://([^/]+)/archives/([^/]+)/p(\d+)', link)
+    if not match:
+        return
+
+    team_id, channel_id, ts = match.groups()
+    ts = f"{ts[:10]}.{ts[10:]}"  # Convert to Slack's timestamp format
+
+    try:
+        # Fetch the message using conversations.history
+        response = client.conversations_history(channel=channel_id, latest=ts, inclusive=True, limit=1)
+        message = response.get('messages')[0]
+        post_message(say, channel_id, message.get('user'), ts, team_id)
+    except SlackApiError as e:
+        print(f"Error fetching message or user info: {e.response['error']}")
+
+
+# if mention
+@app.event("app_mention")
+def handle_app_mention_events(body, say):
+    event = body.get("event", {})
+    if (event == {} or event.get("edited") != None):
+        return
+
+    # post message
+    post_message(say, event.get("channel"), event.get("user"), event.get("ts"), body.get("team_id"))
+
 
 
 @app.event('message')

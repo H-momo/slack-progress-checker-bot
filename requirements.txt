@@ -1,0 +1,8 @@
+certifi==2024.6.15
+charset-normalizer
+idna
+python-dotenv
+requests
+slack-bolt
+slack-sdk
+urllib3

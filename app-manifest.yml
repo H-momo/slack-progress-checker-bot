@@ -1,0 +1,44 @@
+display_information:
+  name: 進捗
+  description: 進捗をチャンネルに転送します.
+  background_color: "#a15543"
+  long_description: "<https://github.com/H-momo/slack-progress-checker-bot|こちら>のコードで動いています.\r
+
+    アイコンは<https://www.ac-illust.com/main/detail.php?id=2187015&word=%E6%AF%94%E5%86%85%E5%9C%B0%E9%B6%8F_%E9%B6%8F_%E3%83%8B%E3%83%AF%E3%83%88%E3%83%AA_%E3%81%AB%E3%82%8F%E3%81%A8%E3%82%8A_%E9%BB%92&data_type=&from_order_history=&downloader_register=success|こちら>より拝借しました.\r
+
+    \r
+
+    *2024/6/15 現在の機能*\r
+
+    \r
+
+    * Bot がメンションされたメッセージを, 指定したチャンネルにリンクを送信する形で転送します."
+features:
+  bot_user:
+    display_name: 進捗
+    always_online: true
+oauth_config:
+  scopes:
+    user:
+      - channels:history
+    bot:
+      - app_mentions:read
+      - channels:join
+      - channels:read
+      - chat:write
+      - chat:write.customize
+      - users:read
+      - channels:history
+      - files:write
+settings:
+  event_subscriptions:
+    user_events:
+      - message.channels
+    bot_events:
+      - app_mention
+      - message.channels
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
